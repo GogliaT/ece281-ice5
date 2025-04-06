@@ -11,7 +11,7 @@
 --| ---------------------------------------------------------------------------
 --|
 --| FILENAME      : MooreElevatorController.vhd
---| AUTHOR(S)     : Capt Phillip Warner, Capt Dan Johnson, Capt Brian Yarbrough, ***YourName***
+--| AUTHOR(S)     : Capt Phillip Warner, Capt Dan Johnson, Capt Brian Yarbrough, Thomas Goglia
 --| CREATED       : 03/2018 Last Modified on 06/24/2020
 --| DESCRIPTION   : This file implements the ICE5 Basic elevator controller (Moore Machine)
 --|
@@ -95,16 +95,36 @@ begin
 	-- CONCURRENT STATEMENTS ------------------------------------------------------------------------------
 	
 	-- Next State Logic
-  
+    f_Q_next <= s_floor1 when ((f_Q = s_floor2 and (i_up_down = '0')) or (f_Q = s_floor1 and (i_up_down = '0'))) else
+                s_floor2 when ((f_Q = s_floor3 and (i_up_down = '0')) or (f_Q = s_floor1 and (i_up_down = '1'))) else
+                s_floor3 when ((f_Q = s_floor4 and (i_up_down = '0')) or (f_Q = s_floor2 and (i_up_down = '1'))) else
+                s_floor4 when ((f_Q = s_floor4 and (i_up_down = '1')) or (f_Q = s_floor3 and (i_up_down = '1'))) else
+                s_floor2; -- default case
 	-- Output logic
-
+    with f_Q select
+        o_floor <= "0001" when s_floor1,
+                   "0010" when s_floor2,
+                   "0100" when s_floor3,
+                   "1000" when s_floor4,
+                   "0001" when others; -- default is floor1
+                   
 	-------------------------------------------------------------------------------------------------------
 	
 	-- PROCESSES ------------------------------------------------------------------------------------------	
 	
 	-- State register ------------
-	
-	
+	register_proc : process (i_clk, i_stop, i_reset)
+	begin 
+	   if (rising_edge(i_clk)) then
+	       if i_reset = '1' then
+	           f_Q <= s_floor2;
+	       elsif i_stop = '1' then
+	           f_Q <= f_Q;
+           else
+               f_Q <= f_Q_next;
+           end if;
+       end if;
+	end process register_proc;
 	-------------------------------------------------------------------------------------------------------
 	
 	
